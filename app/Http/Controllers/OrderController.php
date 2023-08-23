@@ -7,8 +7,12 @@ use App\Events\OnGoingOrderEvent;
 use App\Events\ReadyToDeliverEvent;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\OrderCart;
+use App\Models\Table;
 use App\Status\OrderStatus;
+use App\Status\UserType;
 use App\Traits\CustomResponse;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -49,15 +53,54 @@ class OrderController extends Controller
     }
 
     public function toReady(Order $order){
-        $order->update([
-           'order_state' => OrderStatus::Ready
-        ]);
 
-        $data = OrderResource::collection([$order]);
+        if ($order['is_first']){
+            $order->update([
+                'order_state' => OrderStatus::Ready
+            ]);
+            $data = OrderResource::collection([$order]);
+            event(new ReadyToDeliverEvent($data));
+            return $this->customResponse($data,"Order's State Updated Successfully");
+        }
 
-        event(new ReadyToDeliverEvent($data));
 
-        return $this->customResponse($order,"Order's State Updated Successfully");
+        $firstOrder = Order::where('table_id' , $order['table_id'])
+            ->where('is_first' , true)
+            ->where('order_state' , OrderStatus::Ready)
+            ->first();
+
+        if ($firstOrder && !$order['is_first']){
+            $newTotal = $firstOrder['total'];
+            foreach ($order->orderItems as $orderItem){
+                $newTotal += $orderItem['total'];
+                $orderItem->update([
+                    'order_id' =>  $firstOrder['id']
+                ]);
+            }
+
+            $order->delete();
+
+            $data = OrderResource::collection([$firstOrder]);
+            event(new ReadyToDeliverEvent($data));
+            return $this->customResponse($data,"Order's State Updated Successfully");
+        }
+
+        if (!$firstOrder && !$order['is_first']){
+            $firstOrder = Order::where('table_id' , $order['table_id'])
+                ->where('is_first' , true)
+                ->first();
+            $firstOrder->update([
+                'is_first' => false
+            ]);
+
+            $order->update([
+                'is_first' => true,
+                'order_state' => OrderStatus::Ready
+            ]);
+            $data = OrderResource::collection([$order]);
+            event(new ReadyToDeliverEvent($data));
+            return $this->customResponse($data,"Order's State Updated Successfully");
+        }
     }
 
     public function startPreparing(Order $order){

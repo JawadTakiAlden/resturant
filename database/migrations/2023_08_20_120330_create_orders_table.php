@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('table_id')->references('id')->on('tables')->onDelete('cascade');
             $table->tinyInteger('order_state')->default(OrderStatus::WAITING);
             $table->double('total')->default(0);
+            $table->boolean('is_first')->default(false);
             $table->timestamps();
         });
     }
