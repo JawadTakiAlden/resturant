@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\SecurityChecker\Checker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,8 +13,8 @@ class AuthenticationController extends Controller
 {
     public function login(LoginUserRequest $request){
         try {
-            if ($request->query()){
-                return response().json(['message' => 'Query p1arameters are not allowed']);
+            if (Checker::isParamsFoundInRequest()){
+                return Checker::CheckerResponse();
             }
             // validate data coming by request
             $request->validated($request->all());
@@ -40,9 +41,5 @@ class AuthenticationController extends Controller
                 'message' => $th->getMessage()
             ], 500);
         }
-
-
-
-
     }
 }

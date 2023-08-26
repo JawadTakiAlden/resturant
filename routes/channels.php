@@ -42,3 +42,7 @@ Broadcast::channel('newOrder', function ($user) {
 Broadcast::channel('WaitingOrder', function ($user) {
     $user->type === UserType::KITCHEN;
 });
+
+Broadcast::channel('PastOrders', function ($user) {
+    $user->type === UserType::CASHER;
+});

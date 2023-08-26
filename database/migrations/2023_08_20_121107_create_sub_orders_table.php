@@ -4,7 +4,6 @@ use App\Status\OrderStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -13,10 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('sub_orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('table_id')->references('id')->on('tables')->onDelete('cascade');
-            $table->boolean('in_progress')->default(true);
+            $table->foreignId('order_id')->references('id')->on('orders');
+            $table->tinyInteger('order_state')->default(OrderStatus::WAITING);
+            $table->foreignId('table_id')->references('id')->on('tables');
+            $table->double('total')->default(0);
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('sub_orders');
     }
 };

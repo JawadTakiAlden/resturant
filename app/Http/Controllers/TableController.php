@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTableRequest;
 use App\Http\Resources\TableResource;
 use App\Models\Table;
+use App\SecurityChecker\Checker;
 use App\Traits\CustomResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,10 @@ class TableController extends Controller
      */
     public function index()
     {
+
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $tables = Table::all();
 
         return TableResource::collection($tables);
@@ -26,6 +31,9 @@ class TableController extends Controller
      */
     public function store(StoreTableRequest $request)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $request->validated($request->all());
 
         $table = Table::create($request->all());
@@ -38,6 +46,20 @@ class TableController extends Controller
      */
     public function show(Table $table)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         return TableResource::collection([$table]);
+    }
+
+    public function closeTable(Table $table){
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+        $table->update([
+           'in_progress' => false
+        ]);
+
+        return $this->customResponse($table , 'Your request was successfully and table number' . $table['table_number'] . 'is free now');
     }
 }

@@ -16,7 +16,7 @@ class OrderItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'order_id' => $this->order_id,
+            'sub_order_id' => $this->sub_order_id,
             'quantity' => $this->quantity,
             'meal_id' => $this->meal_id,
             'note' => $this->note,

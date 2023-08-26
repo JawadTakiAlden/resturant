@@ -9,8 +9,8 @@ class OrderItem extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
-    public function order(){
-        return $this->belongsTo(Order::class);
+    public function subOrder(){
+        return $this->belongsTo(SubOrder::class);
     }
 
     public function meal(){

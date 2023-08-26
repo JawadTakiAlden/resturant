@@ -6,6 +6,7 @@ use App\Http\Requests\StoreMealRequest;
 use App\Http\Requests\UpdateMealRequest;
 use App\Http\Resources\MealResource;
 use App\Models\Meal;
+use App\SecurityChecker\Checker;
 use App\Traits\CustomResponse;
 
 class MealController extends Controller
@@ -16,6 +17,10 @@ class MealController extends Controller
      */
     public function index()
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+
         $meals = Meal::whereHas('category', function($q) {
             $q->where('visibility', true);
         })->where('visibility', true)
@@ -32,9 +37,11 @@ class MealController extends Controller
     public function store(StoreMealRequest $request)
     {
         try {
-            if ($request->query()){
-                return $this->customResponse(null , 'Query parameters not allowed' , 401);
+            if (Checker::isParamsFoundInRequest()){
+                return Checker::CheckerResponse();
             }
+
+
             $request->validated($request->all());
 
             $meal = Meal::create($request->all());
@@ -51,6 +58,9 @@ class MealController extends Controller
      */
     public function show(Meal $meal)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         return MealResource::collection([$meal]);
     }
 
@@ -59,6 +69,9 @@ class MealController extends Controller
      */
     public function update(UpdateMealRequest $request, Meal $meal)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $request->validated($request->all());
 
         $meal->update($request->all());
@@ -71,11 +84,17 @@ class MealController extends Controller
      */
     public function destroy(Meal $meal)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $meal->delete();
         return $this->customResponse(null , 'One Meal Deleted Successfully');
     }
 
     public function switchMeal(Meal $meal){
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $meal->update([
            'visibility' => ! boolval($meal->visibility),
         ]);

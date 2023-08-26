@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Status\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderResource extends JsonResource
+class PasOrderResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,12 +18,12 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'table_id' => $this->table_id,
-            'order_state' => $this->order_state,
-            'order_id' => $this->order_id,
-            'total' => $this->total,
-            'relationship' => [
+            'in_progress' => $this->in_progress,
+            'relationships' => [
                 'table' => $this->table,
-                'order_items' => OrderItemResource::collection($this->orderItems),
+                'ready_sub_orders' => OrderResource::collection($this->subOrders->filter(function ($subOrder) {
+                    return $subOrder->order_state === OrderStatus::Ready;
+                }))
             ]
         ];
     }

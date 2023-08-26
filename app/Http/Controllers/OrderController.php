@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Events\AddNewOrderEvent;
 use App\Events\OnGoingOrderEvent;
+use App\Events\PastOrdersEvent;
 use App\Events\ReadyToDeliverEvent;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\PasOrderResource;
 use App\Models\Order;
 use App\Models\OrderCart;
+use App\Models\SubOrder;
 use App\Models\Table;
+use App\SecurityChecker\Checker;
 use App\Status\OrderStatus;
 use App\Status\UserType;
 use App\Traits\CustomResponse;
@@ -24,12 +28,15 @@ class OrderController extends Controller
     {
         try {
 
+            if (Checker::isParamsFoundInRequest()){
+                return Checker::CheckerResponse();
+            }
 
             \request()->validate([
                 'state' => 'integer'
             ]);
 
-            $orders = Order::where('order_state' , request('state'))->get();
+            $orders = SubOrder::where('order_state' , request()->get('state'))->get();
 
             return OrderResource::collection($orders);
 
@@ -44,85 +51,86 @@ class OrderController extends Controller
 
     }
 
+
+    public function pastOrders(){
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+        $orders = Order::all();
+        return PasOrderResource::collection($orders);
+    }
+
     /**
      * Display the specified resource.
      */
     public function show(Order $order)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         return OrderResource::collection([$order]);
     }
 
-    public function toReady(Order $order){
+    public function toReady(SubOrder $subOrder){
 
-        if ($order['is_first']){
-            $order->update([
-                'order_state' => OrderStatus::Ready
-            ]);
-            $data = OrderResource::collection([$order]);
-            event(new ReadyToDeliverEvent($data));
-            return $this->customResponse($data,"Order's State Updated Successfully");
+        // we need to make this sub order ready to let waiter and kitchen see it as spreat ready order for specific table
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
         }
 
+        $subOrder->update([
+            'order_state' => OrderStatus::Ready
+        ]);
 
-        $firstOrder = Order::where('table_id' , $order['table_id'])
-            ->where('is_first' , true)
-            ->where('order_state' , OrderStatus::Ready)
-            ->first();
+        // then broadcast this ready order in readyOrder Channel
+        $data = OrderResource::collection([$subOrder]);
+        event(new AddNewOrderEvent($data));
 
-        if ($firstOrder && !$order['is_first']){
-            $newTotal = $firstOrder['total'];
-            foreach ($order->orderItems as $orderItem){
-                $newTotal += $orderItem['total'];
-                $orderItem->update([
-                    'order_id' =>  $firstOrder['id']
-                ]);
-            }
+        // but in casher we need to broadcast the parent order of this sub order with all sub orders that have state ready
 
-            $order->delete();
+        // so first : get the parent of this sub order
 
-            $data = OrderResource::collection([$firstOrder]);
-            event(new ReadyToDeliverEvent($data));
-            return $this->customResponse($data,"Order's State Updated Successfully");
-        }
+        $parent = Order::where('id' , $subOrder['order_id'])->first();
 
-        if (!$firstOrder && !$order['is_first']){
-            $firstOrder = Order::where('table_id' , $order['table_id'])
-                ->where('is_first' , true)
-                ->first();
-            $firstOrder->update([
-                'is_first' => false
-            ]);
 
-            $order->update([
-                'is_first' => true,
-                'order_state' => OrderStatus::Ready
-            ]);
-            $data = OrderResource::collection([$order]);
-            event(new ReadyToDeliverEvent($data));
-            return $this->customResponse($data,"Order's State Updated Successfully");
-        }
+
+        event(new PastOrdersEvent(PasOrderResource::collection([$parent])));
+
+
+
+        return $this->customResponse($subOrder , 'your request was successfully and you order is ready now');
     }
 
-    public function startPreparing(Order $order){
-        $order->update([
+    public function startPreparing(SubOrder $subOrder){
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+
+        $subOrder->update([
             'order_state' => OrderStatus::Preparing
         ]);
 
-        $data = OrderResource::collection([$order]);
+
+        $data = OrderResource::collection([$subOrder]);
         event(new OnGoingOrderEvent($data));
 
-        return $this->customResponse($order,"Order's State Updated Successfully");
+        return $this->customResponse($subOrder,"Order's State Updated Successfully");
     }
 
-    public function acceptOrder(Order $order){
-        $order->update([
+    public function acceptOrder(SubOrder $subOrder){
+
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+
+        $subOrder->update([
             'order_state' => OrderStatus::New
         ]);
 
-        $data = OrderResource::collection([$order]);
+        $data = OrderResource::collection([$subOrder]);
 
         event(new AddNewOrderEvent($data));
 
-        return $this->customResponse($order,"Order's State Updated Successfully");
+        return $this->customResponse($subOrder,"Order's State Updated Successfully");
     }
 }

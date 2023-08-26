@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use App\SecurityChecker\Checker;
 use App\Traits\CustomResponse;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,9 @@ class CategoryController extends Controller
      */
     public function index()
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $categories = Category::where('visibility' , true)->get();
 
         return CategoryResource::collection($categories);
@@ -28,6 +32,10 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
+
         $request->validated($request->all());
 
         $category = Category::create($request->all());
@@ -40,6 +48,9 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         return CategoryResource::collection([$category]);
     }
 
@@ -48,6 +59,9 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, Category $category)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $request->validated($request->all());
 
         $category->update($request->all());
@@ -60,12 +74,18 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $category->delete();
 
         return $this->customResponse($category , 'One Category Deleted Successfully');
     }
 
     public function switchCategory(Category $category){
+        if (Checker::isParamsFoundInRequest()){
+            return Checker::CheckerResponse();
+        }
         $category->update([
             'visibility' => ! boolval($category->visibility),
         ]);

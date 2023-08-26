@@ -29,16 +29,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 Route::middleware(['CheckWaiter' , 'auth:sanctum'])->group(function () {
     Route::post('/add_order_to_table' , [OrderItemController::class , 'store']);
+    Route::patch('/close-table/{table}' , [TableController::class , 'closeTable']);
 });
 
 
 Route::middleware(['CheckCasher' , 'auth:sanctum'])->group(function () {
-    Route::patch('/accept_order/{order}' , [OrderController::class , 'acceptOrder']);
+    Route::patch('/accept_order/{subOrder}' , [OrderController::class , 'acceptOrder']);
+    Route::get('past-orders' , [OrderController::class , 'pastOrders']);
 });
 
 Route::middleware(['CheckKitchen' , 'auth:sanctum'])->group(function () {
-    Route::patch('/start_preparing/{order}' , [OrderController::class , 'startPreparing']);
-    Route::patch('/make_order_ready/{order}' , [OrderController::class , 'toReady']);
+    Route::patch('/start_preparing/{subOrder}' , [OrderController::class , 'startPreparing']);
+    Route::patch('/make_order_ready/{subOrder}' , [OrderController::class , 'toReady']);
 });
 
 
