@@ -35,7 +35,7 @@ Route::middleware(['CheckWaiter' , 'auth:sanctum'])->group(function () {
 
 Route::middleware(['CheckCasher' , 'auth:sanctum'])->group(function () {
     Route::patch('/accept_order/{subOrder}' , [OrderController::class , 'acceptOrder']);
-    Route::get('past-orders' , [OrderController::class , 'pastOrders']);
+    Route::get('/past-orders' , [OrderController::class , 'pastOrders']);
 });
 
 Route::middleware(['CheckKitchen' , 'auth:sanctum'])->group(function () {

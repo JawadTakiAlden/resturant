@@ -5,7 +5,7 @@ namespace App\SecurityChecker;
 
 class Checker
 {
-    public static function isParamsFoundInRequest(array $except){
+    public static function isParamsFoundInRequest(){
         if (request()->query()){
             return true;
         }
