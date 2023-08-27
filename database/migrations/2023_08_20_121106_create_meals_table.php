@@ -20,7 +20,7 @@ return new class extends Migration
             $table->double('price');
             $table->boolean('visibility')->default(true);
             $table->double('calories');
-            $table->time('estimated_time')->nullable();
+            $table->time('estimated_time')->default('00:05:00');
             $table->timestamps();
         });
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTableRequest;
 use App\Http\Resources\TableResource;
+use App\Models\Order;
 use App\Models\Table;
 use App\SecurityChecker\Checker;
 use App\Traits\CustomResponse;
@@ -58,6 +59,13 @@ class TableController extends Controller
         }
         $table->update([
            'in_progress' => false
+        ]);
+
+
+        $order = Order::where('table_id' , $table['id'])->where('in_progress' , true)->first();
+
+        $order->update([
+            'in_progress' => false
         ]);
 
         return $this->customResponse($table , 'Your request was successfully and table number' . $table['table_number'] . 'is free now');

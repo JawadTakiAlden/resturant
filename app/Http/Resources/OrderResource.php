@@ -19,6 +19,7 @@ class OrderResource extends JsonResource
             'table_id' => $this->table_id,
             'order_state' => $this->order_state,
             'order_id' => $this->order_id,
+            'estimated_time' => $this->estimated_time,
             'total' => $this->total,
             'relationship' => [
                 'table' => $this->table,

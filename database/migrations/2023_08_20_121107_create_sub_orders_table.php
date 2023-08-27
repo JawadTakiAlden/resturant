@@ -18,6 +18,7 @@ return new class extends Migration
             $table->tinyInteger('order_state')->default(OrderStatus::WAITING);
             $table->foreignId('table_id')->references('id')->on('tables');
             $table->double('total')->default(0);
+            $table->time('estimated_time')->default('00:00:00');
             $table->timestamps();
         });
     }

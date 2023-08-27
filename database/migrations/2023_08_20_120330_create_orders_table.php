@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('table_id')->references('id')->on('tables')->onDelete('cascade');
+            $table->double('total')->default(0);
             $table->boolean('in_progress')->default(true);
             $table->timestamps();
         });

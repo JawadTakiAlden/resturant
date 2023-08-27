@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PastOrdersEvent implements ShouldBroadcast
+class Order30MinutesAgoEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -30,16 +30,16 @@ class PastOrdersEvent implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return ['PastOrders'];
+        return ['order30MinutesAgo'];
     }
 
-    public function broadcastAs(){
-        return 'past-order-added';
+    public function broadcastAs() {
+        return 'order-from-30-minutes';
     }
 
-    public function broadcastWith(){
+    public function broadcastWith () {
         return [
-            'order' => $this->order
+            'order' => $this->order,
         ];
     }
 }

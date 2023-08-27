@@ -14,6 +14,7 @@ use App\Models\SubOrder;
 use App\Models\Table;
 use App\SecurityChecker\Checker;
 use App\Traits\CustomResponse;
+use Illuminate\Support\Carbon;
 
 class OrderItemController extends Controller
 {
@@ -44,11 +45,19 @@ class OrderItemController extends Controller
 
             // now we need to update total price for this sub order by loop over order items
             $total_price_of_sub_order = 0;
+            $estimatedTime = 0;
 
             // get order items for this sub order
             foreach ($request->order_items as $order_item){
                 // then get meal that this order item has it
                 $meal = Meal::where('id' , $order_item['meal_id'])->first();
+
+                // get estimated time for this order_item
+                $timeInTimestamp = new Carbon($meal['estimated_time']);
+                $totalTimeStamp = $timeInTimestamp->getTimestamp() * $order_item['quantity'];
+                if ($estimatedTime < $totalTimeStamp){
+                    $estimatedTime = $totalTimeStamp;
+                }
                 // calc total price of this order ite,
                 $total_price_of_item = $order_item['quantity'] * $meal->price;
                 // initilize array of order item data
@@ -58,8 +67,13 @@ class OrderItemController extends Controller
                 // update total price of sub order
                 $total_price_of_sub_order += $total_price_of_item;
             }
+
+            $estimatedTimeOfThisOrder = Carbon::createFromTimestamp($estimatedTime)->format('H:i:s');
+
+
             $subOrder->update([
-                'total' => $total_price_of_sub_order
+                'total' => $total_price_of_sub_order,
+                'estimated_time' => $estimatedTimeOfThisOrder
             ]);
 
             $myNewOrder = SubOrder::where('id' , $subOrder['id'])->first();
@@ -86,11 +100,16 @@ class OrderItemController extends Controller
             ]);
 
             $total_price_of_sub_order = 0;
-
+            $estimatedTime = 0;
             // get order items for this sub order
+
             foreach ($request->order_items as $order_item){
                 // then get meal that this order item has it
                 $meal = Meal::where('id' , $order_item['meal_id'])->first();
+                // get estimated time for this order_item
+                $timeInTimestamp = Carbon::parse($meal['estimated_time']);
+                $totalTimeStamp = $timeInTimestamp->copy()->getTimestamp() * $order_item['quantity'];
+                $estimatedTime = max($estimatedTime , $totalTimeStamp);
                 // calc total price of this order ite,
                 $total_price_of_item = $order_item['quantity'] * $meal->price;
                 // initilize array of order item data
@@ -100,8 +119,12 @@ class OrderItemController extends Controller
                 // update total price of sub order
                 $total_price_of_sub_order += $total_price_of_item;
             }
+            $estimatedTimeOfThisOrder = Carbon::createFromTimestamp($estimatedTime)->format('H:i:s');
+
+
             $subOrder->update([
-                'total' => $total_price_of_sub_order
+                'total' => $total_price_of_sub_order,
+                'estimated_time' => $estimatedTimeOfThisOrder
             ]);
 
             $myNewOrder = SubOrder::where('id' , $subOrder['id'])->first();

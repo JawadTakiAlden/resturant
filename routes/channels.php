@@ -25,6 +25,7 @@ Broadcast::channel('onGoingOrders', function ($user) {
         || $user->type === UserType::KITCHEN;
 });
 
+
 Broadcast::channel('readyToDeliver', function ($user) {
     return $user->type === UserType::WAITER
         || $user->type === UserType::CASHER
@@ -45,4 +46,11 @@ Broadcast::channel('WaitingOrder', function ($user) {
 
 Broadcast::channel('PastOrders', function ($user) {
     return $user->type === UserType::CASHER;
+});
+
+
+Broadcast::channel('order30MinutesAgo', function ($user) {
+    return $user->type === UserType::WAITER
+        || $user->type === UserType::CASHER
+        || $user->type === UserType::KITCHEN;
 });

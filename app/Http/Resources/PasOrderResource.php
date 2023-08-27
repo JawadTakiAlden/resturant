@@ -19,6 +19,7 @@ class PasOrderResource extends JsonResource
             'id' => $this->id,
             'table_id' => $this->table_id,
             'in_progress' => $this->in_progress,
+            'total' => $this->total,
             'relationships' => [
                 'table' => $this->table,
                 'ready_sub_orders' => OrderResource::collection($this->subOrders->filter(function ($subOrder) {

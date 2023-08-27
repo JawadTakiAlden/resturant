@@ -16,6 +16,7 @@ use App\SecurityChecker\Checker;
 use App\Status\OrderStatus;
 use App\Status\UserType;
 use App\Traits\CustomResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
@@ -28,8 +29,9 @@ class OrderController extends Controller
     {
         try {
 
-            if (Checker::isParamsFoundInRequest()){
-                return Checker::CheckerResponse();
+            $queryParams = \request()->query();
+            if(count($queryParams) > 1) {
+                return  Checker::CheckerResponse('only state query params allowed for this api and its must from integer type');
             }
 
             \request()->validate([
@@ -56,7 +58,9 @@ class OrderController extends Controller
         if (Checker::isParamsFoundInRequest()){
             return Checker::CheckerResponse();
         }
-        $orders = Order::all();
+        $orders = Order::whereHas('subOrders' , fn($query) =>
+            $query->where('order_state' , OrderStatus::Ready)
+        )->get();
         return PasOrderResource::collection($orders);
     }
 
@@ -84,7 +88,7 @@ class OrderController extends Controller
 
         // then broadcast this ready order in readyOrder Channel
         $data = OrderResource::collection([$subOrder]);
-        event(new AddNewOrderEvent($data));
+        event(new ReadyToDeliverEvent($data));
 
         // but in casher we need to broadcast the parent order of this sub order with all sub orders that have state ready
 
@@ -92,7 +96,9 @@ class OrderController extends Controller
 
         $parent = Order::where('id' , $subOrder['order_id'])->first();
 
-
+        $parent->update([
+           'total' =>  $parent['total'] + $subOrder['total']
+        ]);
 
         event(new PastOrdersEvent(PasOrderResource::collection([$parent])));
 
@@ -119,6 +125,8 @@ class OrderController extends Controller
 
     public function acceptOrder(SubOrder $subOrder){
 
+
+
         if (Checker::isParamsFoundInRequest()){
             return Checker::CheckerResponse();
         }
@@ -126,6 +134,8 @@ class OrderController extends Controller
         $subOrder->update([
             'order_state' => OrderStatus::New
         ]);
+
+
 
         $data = OrderResource::collection([$subOrder]);
 
